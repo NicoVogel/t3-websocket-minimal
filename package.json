@@ -6,6 +6,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "dev:ws": "SKIP_ENV_VALIDATION=1 tsx watch src/server/wss.ts",
     "lint": "next lint",
     "start": "next start"
   },
@@ -21,6 +22,7 @@
     "react-dom": "18.2.0",
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
+    "ws": "^8.16.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -28,6 +30,7 @@
     "@types/node": "^18.17.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@typescript-eslint/parser": "^6.11.0",
     "autoprefixer": "^10.4.14",
@@ -37,6 +40,7 @@
     "prettier": "^3.1.0",
     "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwindcss": "^3.3.5",
+    "tsx": "^4.7.1",
     "typescript": "^5.1.6"
   },
   "ct3aMetadata": {

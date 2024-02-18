@@ -9,6 +9,9 @@
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { TypedEventEmitter } from "~/lib/event-emitter";
+
+const ee = new TypedEventEmitter();
 
 /**
  * 1. CONTEXT
@@ -22,10 +25,8 @@ import { ZodError } from "zod";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-  return {
-    ...opts,
-  };
+export const createTRPCContext = async () => {
+  return {ee}
 };
 
 /**

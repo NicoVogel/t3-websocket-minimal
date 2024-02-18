@@ -1,3 +1,4 @@
+import { createWSClient, httpBatchLink, wsLink } from "@trpc/client";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
 
@@ -10,6 +11,21 @@ function getBaseUrl() {
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
+
+export function getEndingLink() {
+  if (typeof window === "undefined") {
+    return httpBatchLink({
+      url: `${getBaseUrl()}/api/trpc`,
+    });
+  }
+  const client = createWSClient({
+    url: "ws://localhost:3001",
+  });
+  return wsLink<AppRouter>({
+    client,
+  });
+}
+
 
 export function getUrl() {
   return getBaseUrl() + "/api/trpc";

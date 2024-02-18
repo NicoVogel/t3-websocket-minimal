@@ -48,5 +48,19 @@ export const roomRouter = createTRPCRouter({
 
       return message;
     }),
-    
+    onSendMessage: publicProcedure.input(messageSubSchema).subscription(({ctx, input}) => {
+      return observable<Message>((emit) => {
+        function onMessage(data: Message) {
+          if (input.roomId === data.roomId) {
+            emit.next(data);
+          }
+        }
+
+        ctx.ee.on('SEND_MESSAGE', onMessage);
+
+        return () => {
+          ctx.ee.off('SEND_MESSAGE', onMessage);
+        };
+      });
+    }),
 });
