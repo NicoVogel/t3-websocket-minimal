@@ -1,4 +1,4 @@
-import { createWSClient, httpBatchLink, wsLink } from "@trpc/client";
+import { createWSClient, unstable_httpBatchStreamLink, wsLink } from "@trpc/client";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
 
@@ -14,7 +14,7 @@ function getBaseUrl() {
 
 export function getEndingLink() {
   if (typeof window === "undefined") {
-    return httpBatchLink({
+    return unstable_httpBatchStreamLink({
       url: `${getBaseUrl()}/api/trpc`,
     });
   }
