@@ -14,3 +14,8 @@ To run the application locally run the following two commands in two terminals:
 ## Inspired by
 
 https://github.com/TomDoesTech/t3-chat
+
+
+## Clerk setup:
+
+checkout `feat/clerk` to see how this would work with clerk
