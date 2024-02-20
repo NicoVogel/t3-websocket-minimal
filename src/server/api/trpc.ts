@@ -6,12 +6,28 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { TypedEventEmitter } from "~/lib/event-emitter";
+// import { auth} from "@clerk/nextjs";
+/**
+ * Hack to get rid of:
+ * import { auth } from "@clerk/nextjs";
+ *          ^
+ * SyntaxError: The requested module '@clerk/nextjs' does not provide an export named 'auth'
+ */
+const clerkModule = import("@clerk/nextjs");
 
-const ee = new TypedEventEmitter();
+const globalForEE = globalThis as unknown as {
+  ee: TypedEventEmitter | undefined;
+};
+
+if(!globalForEE.ee) {
+  // this must be the same instance otherwise the websocket connection requests can't interact with the normal requests
+  globalForEE.ee = new TypedEventEmitter();
+}
+
 
 /**
  * 1. CONTEXT
@@ -26,8 +42,17 @@ const ee = new TypedEventEmitter();
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async () => {
-  return {ee}
+  const { currentUser, auth } = await clerkModule;
+  const authUser = auth().user;
+  if (authUser) {
+    return { ee: globalForEE.ee!, user: authUser };
+  }
+  console.log('user not available in auth()')
+  const user = await currentUser();
+  return { ee: globalForEE.ee!, user };
 };
+
+export const createWebSocketContext = async () => ({ ee: globalForEE.ee!, user: null });
 
 /**
  * 2. INITIALIZATION
@@ -72,3 +97,19 @@ export const createTRPCRouter = t.router;
  * are logged in.
  */
 export const publicProcedure = t.procedure;
+
+/**
+ * Protected (authenticated) procedure for users
+ */
+export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+    },
+  });
+});

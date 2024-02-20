@@ -1,4 +1,5 @@
 "use client";
+import { SignIn, UserButton, useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { type RouterOutputs } from "~/trpc/shared";
@@ -29,62 +30,45 @@ function MessageItem({ message, name }: { message: Message; name: string }) {
   );
 }
 
-function SetName({ done }: { done: (name: string) => void }) {
-  const [name, setName] = useState("");
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        done(name);
-      }}
-      className="flex flex-col gap-2"
-    >
-      <input
-        type="text"
-        placeholder="Title"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="w-full rounded-full px-4 py-2 text-black"
-      />
-      <button
-        type="submit"
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20"
-      >
-        Submit
-      </button>
-    </form>
-  );
-}
-
 function RoomPage({ params }: { params: { roomId: string } }) {
   const roomId = params.roomId;
+  const { user } = useUser();
 
-  const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const sendMessage = api.room.sendMessage.useMutation({});
+  const getMessage = api.room.getMessage.useMutation({
+    onSuccess(data) {
+      setMessages((m) => {
+        return [...m, data];
+      });
+    },
+  });
 
   const [messages, setMessages] = useState<Message[]>([]);
   api.room.onSendMessage.useSubscription(
     { roomId },
     {
-      onData: (message) => {
-        setMessages((m) => {
-          return [...m, message];
-        });
-      },
+      onData: (message) => getMessage.mutate(message),
     },
   );
 
-  if (!name) {
-    return <SetName done={(n) => setName(n)} />;
+  if (!user) {
+    return <SignIn />;
   }
 
   return (
     <div className="flex h-screen flex-col">
+      <UserButton />
       <div className="flex-1">
         <ul className="flex flex-col p-4">
           {messages.map((m) => {
-            return <MessageItem key={m.id} message={m} name={name} />;
+            return (
+              <MessageItem
+                key={m.id}
+                message={m}
+                name={`${user.firstName} ${user.lastName}`}
+              />
+            );
           })}
         </ul>
       </div>
@@ -98,7 +82,6 @@ function RoomPage({ params }: { params: { roomId: string } }) {
           sendMessage.mutate({
             roomId,
             message,
-            name,
           });
 
           setMessage("");

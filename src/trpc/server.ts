@@ -3,6 +3,7 @@ import "server-only";
 import {
   createTRPCProxyClient,
   loggerLink,
+  splitLink,
   TRPCClientError,
 } from "@trpc/client";
 import { callProcedure } from "@trpc/server";
@@ -13,7 +14,8 @@ import { cache } from "react";
 
 import { appRouter, type AppRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
-import { transformer, getEndingLink } from "./shared";
+import { transformer, getEndingLink,getBatchLink } from "./shared";
+import { env } from "~/env";
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
@@ -31,7 +33,7 @@ export const api = createTRPCProxyClient<AppRouter>({
   links: [
     loggerLink({
       enabled: (op) =>
-        process.env.NODE_ENV === "development" ||
+        env.NEXT_PUBLIC_NODE_ENV === "development" ||
         (op.direction === "down" && op.result instanceof Error),
     }),
     /**
@@ -59,6 +61,11 @@ export const api = createTRPCProxyClient<AppRouter>({
               observer.error(TRPCClientError.from(cause));
             });
         }),
-    getEndingLink(),
+    // getEndingLink(),
+    splitLink({
+      condition: (op) => op.type === "subscription",
+      true: getEndingLink(),
+      false: getBatchLink(),
+    }),
   ],
 });
